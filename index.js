@@ -6,7 +6,7 @@ const port = process.env.PORT || 5000;
 const customerComment = require('./Data/cutommerComment.json');
 
 app.use(cors());
-
+app.use(express.json()); // Add this line to enable body parsing
 
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -25,12 +25,36 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    const toysCollection = client.db('toysMarket').collection('toys');
+
+    app.get('/toys', async (req, res) => {
+      console.log(req.body);
+      let query = {};
+      if (req.query?.email) {
+          query = { email: req.query.email }
+      }
+      const result = await toysCollection.find(query).toArray();
+      res.send(result);
+  })
+
+  app.post('/api/saveData',async (req, res) => {
+    const toys = req.body;
+    console.log(toys);
+    const result = await toysCollection.insertOne(toys);
+    res.send(result);
+});
+
+
+
+
+   
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
